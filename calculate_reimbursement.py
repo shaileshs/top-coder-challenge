@@ -19,16 +19,18 @@ if trip_duration_days > 7:
 if miles_traveled <= 100:
     mileage = miles_traveled * 0.58
 elif miles_traveled <= 500:
-    mileage = 100 * 0.58 + (miles_traveled - 100) * 0.32
+    mileage = 100 * 0.58 + (miles_traveled - 100) * 0.28  # tuned mid-rate
 else:
     # 100 at high rate, 400 at mid rate, rest at log curve
     extra_miles = miles_traveled - 500
-    mileage = 100 * 0.58 + 400 * 0.32 + math.log1p(extra_miles) * 18  # 18 is a tunable factor
+    mileage = 100 * 0.58 + 400 * 0.28 + math.log1p(extra_miles) * 22  # tuned log factor
 miles_per_day = miles_traveled / trip_duration_days if trip_duration_days > 0 else 0
 if 180 <= miles_per_day <= 220:
     mileage *= 1.10  # efficiency bonus
-if miles_per_day < 80 or miles_per_day > 300:
-    mileage *= 0.9  # penalty for too low/high efficiency
+if miles_per_day > 300:
+    mileage *= 0.7  # stronger penalty for excessive daily mileage
+elif miles_per_day < 80:
+    mileage *= 0.8  # stronger penalty for very low efficiency
 
 # 3. Receipts Calculation (more aggressive diminishing returns)
 if total_receipts_amount < 50:
@@ -53,7 +55,10 @@ if trip_duration_days >= 8 and (total_receipts_amount / trip_duration_days) > 90
     vacation_penalty = 0.95
 high_mileage_low_spending_bonus = 0
 if miles_per_day >= 180 and (total_receipts_amount / trip_duration_days) < 75:
-    high_mileage_low_spending_bonus = 25
+    high_mileage_low_spending_bonus = 40  # increased bonus
+# Penalty for high mileage + high spending
+if miles_per_day >= 180 and (total_receipts_amount / trip_duration_days) > 150:
+    mileage *= 0.9
 low_mileage_high_spending_penalty = 1
 if miles_per_day < 80 and (total_receipts_amount / trip_duration_days) > 120:
     low_mileage_high_spending_penalty = 0.95
